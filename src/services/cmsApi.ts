@@ -41,24 +41,27 @@ export class CmsApiService {
   initialize(config: CmsApiConfig): void {
     this.config = config;
 
-    // Use proxy in development to avoid CORS issues
-    const isDev = import.meta.env.DEV;
-    const baseURL = isDev
-      ? window.location.origin // Use proxy in development
-      : (config.baseUrl || 'https://api.cms.reearth.io'); // Use actual URL in production
+    // Use proxy in both development and production to avoid CORS issues
+    // In development: Vite dev server proxy at /api/*
+    // In production (Vercel): Serverless function at /api/*
+    // The proxy forwards requests to https://api.cms.reearth.io
+    // Add /api prefix so SDK requests go through the proxy
+    const baseURL = `${window.location.origin}/api`;
 
     const sdkConfig = {
       baseURL,
       token: config.apiKey,
       workspace: config.workspaceId,
     };
+
     console.log('[CMS API] Initializing with config:', {
       baseURL: sdkConfig.baseURL,
       workspace: sdkConfig.workspace,
       hasToken: !!sdkConfig.token,
       tokenLength: sdkConfig.token?.length,
-      isDev,
+      isDev: import.meta.env.DEV,
     });
+
     this.cms = new CMS(sdkConfig);
   }
 

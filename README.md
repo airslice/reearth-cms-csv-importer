@@ -161,34 +161,49 @@ npm run test:coverage
 
 ## Deployment
 
-### Vercel (Recommended)
+> **⚠️ Important**: The Re:Earth CMS API doesn't allow CORS requests from arbitrary domains. **You need a proxy server** for the application to work in production.
+
+### Vercel (Recommended) 🚀
+
+**Best for:** Fastest deployment, zero configuration, all-in-one solution
+
+Vercel is the **easiest way to deploy** - it handles both static hosting AND the API proxy automatically.
+
+**One-Click Deploy:**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/airslice/reearth-cms-csv-importer)
+
+That's it! Your app will be live in 2 minutes.
+
+**Or deploy via CLI:**
 
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy
-vercel
+vercel login
+vercel --prod
 ```
 
-### Netlify
+**📖 Full Vercel deployment guide**: See [VERCEL-DEPLOYMENT.md](./VERCEL-DEPLOYMENT.md)
 
-```bash
-# Install Netlify CLI
-npm i -g netlify-cli
+**Features:**
+- ✅ Zero configuration needed
+- ✅ Auto-deploy on git push
+- ✅ Static hosting + serverless functions together
+- ✅ 100GB bandwidth/month (free)
+- ✅ Global CDN
+- ✅ Custom domains
+- ✅ HTTPS automatically
 
-# Deploy
-netlify deploy --prod
-```
+### Other Platforms
 
-### Manual Deployment
-
-```bash
-# Build the application
-npm run build
-
-# Deploy the `dist` folder to any static hosting service
-```
+**Compatible platforms:**
+- ✅ **Vercel** (recommended - easiest)
+- ✅ Netlify (similar to Vercel)
+- ✅ Cloudflare Pages (with Workers)
+- ✅ Google Cloud (Functions + Firebase/Cloud Storage)
+- ✅ AWS (Lambda + S3)
+- ❌ GitHub Pages alone
+- ❌ Simple static hosting alone
 
 ## Troubleshooting
 

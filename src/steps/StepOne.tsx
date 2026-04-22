@@ -81,7 +81,6 @@ export const StepOne: React.FC = () => {
       cmsApi.initialize({
         apiKey: state.credentials.apiKey,
         workspaceId: state.credentials.workspaceId,
-        baseUrl: state.credentials.baseUrl,
       });
 
       nextStep();
@@ -126,16 +125,6 @@ export const StepOne: React.FC = () => {
           error={errors.workspaceId}
           required
           data-testid="step-one-workspace-id"
-        />
-
-        <Input
-          label="Base URL (optional)"
-          name="baseUrl"
-          type="url"
-          placeholder="https://api.cms.reearth.io"
-          value={state.credentials.baseUrl}
-          onChange={(value) => updateCredentials({ baseUrl: value })}
-          data-testid="step-one-base-url"
         />
       </div>
 

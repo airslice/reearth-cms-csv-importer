@@ -23,7 +23,6 @@ const initialState: WizardState = {
   credentials: {
     apiKey: '',
     workspaceId: '',
-    baseUrl: 'https://api.cms.reearth.io',
   },
   csvFile: null,
   csvData: null,

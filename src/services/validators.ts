@@ -98,12 +98,6 @@ export class ValidatorService {
       modelName: {
         required: 'Model name is required',
       },
-      baseUrl: {
-        pattern: {
-          value: /^https?:\/\/.+/,
-          message: 'Base URL must be a valid HTTP or HTTPS URL',
-        },
-      },
     };
   }
 }

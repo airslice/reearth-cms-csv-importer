@@ -7,7 +7,6 @@ export type Step = 1 | 2 | 3 | 4;
 export interface Credentials {
   apiKey: string;
   workspaceId: string;
-  baseUrl: string;
 }
 
 export interface WizardState {

@@ -4,8 +4,8 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Base path for GitHub Pages (change to '/' if deploying to username.github.io)
-  base: '/reearth-cms-csv-importer/',
+  // Base path for the application
+  base: '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -18,7 +18,7 @@ export default defineConfig({
         target: 'https://api.cms.reearth.io',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
