@@ -42,11 +42,11 @@ export class CmsApiService {
     this.config = config;
 
     // Use proxy in both development and production to avoid CORS issues
-    // In development: Vite dev server proxy at /api/*
-    // In production (Vercel): Serverless function at /api/*
-    // The proxy forwards requests to https://api.cms.reearth.io
-    // Add /api prefix so SDK requests go through the proxy
-    const baseURL = `${window.location.origin}/api`;
+    // The CMS SDK automatically adds /api prefix to all requests
+    // In development: SDK requests /api/* → Vite proxy → https://api.cms.reearth.io
+    // In production: SDK requests /api/* → Vercel function → https://api.cms.reearth.io
+    // So we just need to set baseURL to our origin (without /api)
+    const baseURL = window.location.origin;
 
     const sdkConfig = {
       baseURL,
