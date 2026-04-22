@@ -24,14 +24,15 @@ export default async function handler(req, res) {
   try {
     // Extract the API path from the request
     // URL: https://your-app.vercel.app/api/workspace/projects
-    // Target: https://api.cms.reearth.io/api/workspace/projects
-    // Note: Re:Earth CMS API keeps the /api prefix in the actual endpoint
+    // Target: https://api.cms.reearth.io/workspace/projects
+    // The CMS SDK includes /api in the request path, but the actual API endpoint doesn't use it
     const { path } = req.query;
     const apiPath = Array.isArray(path) ? path.join('/') : path;
-    const targetUrl = `https://api.cms.reearth.io/api/${apiPath}`;
+    const targetUrl = `https://api.cms.reearth.io/${apiPath}`;
 
     console.log(`[Proxy] ${req.method} ${targetUrl}`);
     console.log('[Proxy] Request path:', path);
+    console.log('[Proxy] apiPath:', apiPath);
     console.log('[Proxy] Has Authorization:', !!req.headers.authorization);
 
     // Prepare request headers
