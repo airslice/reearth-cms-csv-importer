@@ -79,6 +79,17 @@ npm run deploy
 ### Issue: Assets not loading
 **Solution**: Ensure the `base` path includes leading and trailing slashes: `'/repo-name/'`
 
+### Issue: npm ci fails with peer dependency errors (React 19 vs React 18)
+**Problem**: `@testing-library/react@14` requires React 18, but the project uses React 19
+**Solution**: The project includes an `.npmrc` file with `legacy-peer-deps=true` and the workflow uses `npm ci --legacy-peer-deps` to handle this.
+
+If you encounter this locally:
+```bash
+npm install --legacy-peer-deps
+# or
+npm ci --legacy-peer-deps
+```
+
 ### Issue: Workflow fails
 **Solution**:
 1. Check that GitHub Pages is enabled in repository settings
