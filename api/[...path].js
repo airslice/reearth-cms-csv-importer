@@ -24,12 +24,15 @@ export default async function handler(req, res) {
   try {
     // Extract the API path from the request
     // URL: https://your-app.vercel.app/api/workspace/projects
-    // Target: https://api.cms.reearth.io/workspace/projects
+    // Target: https://api.cms.reearth.io/api/workspace/projects
+    // Note: Re:Earth CMS API keeps the /api prefix in the actual endpoint
     const { path } = req.query;
     const apiPath = Array.isArray(path) ? path.join('/') : path;
-    const targetUrl = `https://api.cms.reearth.io/${apiPath}`;
+    const targetUrl = `https://api.cms.reearth.io/api/${apiPath}`;
 
     console.log(`[Proxy] ${req.method} ${targetUrl}`);
+    console.log('[Proxy] Request path:', path);
+    console.log('[Proxy] Has Authorization:', !!req.headers.authorization);
 
     // Prepare request headers
     const headers = {
@@ -40,6 +43,9 @@ export default async function handler(req, res) {
     // Forward Authorization header if present
     if (req.headers.authorization) {
       headers['Authorization'] = req.headers.authorization;
+      console.log('[Proxy] Authorization header forwarded');
+    } else {
+      console.warn('[Proxy] No Authorization header found in request');
     }
 
     // Prepare fetch options
@@ -56,6 +62,8 @@ export default async function handler(req, res) {
     // Forward the request to Re:Earth CMS API
     const response = await fetch(targetUrl, fetchOptions);
 
+    console.log(`[Proxy] Response status: ${response.status}`);
+
     // Get response data
     const contentType = response.headers.get('content-type');
     let data;
@@ -64,6 +72,15 @@ export default async function handler(req, res) {
       data = await response.json();
     } else {
       data = await response.text();
+    }
+
+    // Log error responses for debugging
+    if (!response.ok) {
+      console.error('[Proxy] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+      });
     }
 
     // Forward the response
