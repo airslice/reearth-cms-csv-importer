@@ -24,11 +24,11 @@ export default async function handler(req, res) {
   try {
     // Extract the API path from the request
     // URL: https://your-app.vercel.app/api/workspace/projects
-    // Target: https://api.cms.reearth.io/workspace/projects
-    // The CMS SDK includes /api in the request path, but the actual API endpoint doesn't use it
+    // Path captured: workspace/projects (without /api)
+    // Target: https://api.cms.reearth.io/api/workspace/projects (add /api back)
     const { path } = req.query;
     const apiPath = Array.isArray(path) ? path.join('/') : path;
-    const targetUrl = `https://api.cms.reearth.io/${apiPath}`;
+    const targetUrl = `https://api.cms.reearth.io/api/${apiPath}`;
 
     console.log(`[Proxy] ${req.method} ${targetUrl}`);
     console.log('[Proxy] Request path:', path);

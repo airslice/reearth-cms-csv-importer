@@ -18,8 +18,8 @@ export default defineConfig({
         target: 'https://api.cms.reearth.io',
         changeOrigin: true,
         secure: true,
-        // Strip /api prefix before forwarding to CMS API
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // Keep /api prefix - CMS API expects it
+        rewrite: (path) => path,
       },
     },
   },
