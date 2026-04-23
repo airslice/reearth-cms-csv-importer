@@ -96,6 +96,22 @@ export const StepOne: React.FC = () => {
         </p>
       </div>
 
+      <div className="rounded-lg border bg-card p-4 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Before you start</h3>
+          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <li>Connect an integration to your target workspace (with write access)</li>
+            <li>Make sure your target project is ready</li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Notes</h3>
+          <ul className="list-disc list-inside text-sm text-muted-foreground">
+            <li>It's intended as a playground or for small-scale use, so please avoid importing large datasets</li>
+          </ul>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Re:Earth CMS Credentials</h3>
         <Input
