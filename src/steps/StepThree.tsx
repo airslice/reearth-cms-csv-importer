@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useWizard } from '@/hooks/useWizard';
-import { ProgressBar } from '@/components';
+import { ProgressBar, Button } from '@/components';
 import { importService } from '@/services';
 
 export const StepThree: React.FC = () => {
-  const { state, updateImportProgress, setImportResults, nextStep } = useWizard();
+  const { state, updateImportProgress, setImportResults, nextStep, previousStep } = useWizard();
   const [error, setError] = useState<string>();
+  const [isCancelling, setIsCancelling] = useState(false);
   const importStartedRef = useRef(false);
 
   useEffect(() => {
@@ -14,6 +15,15 @@ export const StepThree: React.FC = () => {
     importStartedRef.current = true;
     executeImport();
   }, []);
+
+  const handleCancel = () => {
+    setIsCancelling(true);
+    importService.cancelImport();
+    // Go back to step 2 after a short delay
+    setTimeout(() => {
+      previousStep();
+    }, 500);
+  };
 
   const executeImport = async () => {
     if (!state.csvData) return;
@@ -43,6 +53,11 @@ export const StepThree: React.FC = () => {
       setImportResults(results);
       setTimeout(() => nextStep(), 1500);
     } catch (err) {
+      // Check if it was cancelled
+      if (err instanceof Error && err.message === 'Import cancelled by user') {
+        // Don't show error for user-initiated cancellation
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Import failed');
     }
   };
@@ -94,6 +109,17 @@ export const StepThree: React.FC = () => {
               <div className="text-destructive font-medium mb-1">Errors</div>
               <div className="text-2xl font-bold text-destructive">{progress.errorCount}</div>
             </div>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isCancelling}
+              data-testid="step-three-cancel"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Import'}
+            </Button>
           </div>
         </div>
       )}

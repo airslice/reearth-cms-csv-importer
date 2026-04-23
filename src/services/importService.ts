@@ -15,6 +15,18 @@ import type {
  */
 
 export class ImportService {
+  private abortController: AbortController | null = null;
+
+  /**
+   * Cancel the current import operation
+   */
+  cancelImport(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+  }
+
   /**
    * Execute complete import for "Create New Model" path
    */
@@ -24,6 +36,8 @@ export class ImportService {
     csvData: CsvData,
     onProgress?: (progress: ImportProgress) => void
   ): Promise<ImportResults> {
+    // Create new abort controller for this import
+    this.abortController = new AbortController();
     try {
       // Phase 1: Create model
       onProgress?.({
@@ -89,7 +103,13 @@ export class ImportService {
       );
 
       // Import items with progress
-      const results = await cmsApi.importItems(model.id, projectId, items, onProgress);
+      const results = await cmsApi.importItems(
+        model.id,
+        projectId,
+        items,
+        onProgress,
+        this.abortController?.signal
+      );
 
       return {
         ...results,
@@ -99,6 +119,23 @@ export class ImportService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+
+      // Check if it was cancelled
+      if (error instanceof Error && error.name === 'AbortError') {
+        return {
+          success: false,
+          totalRows: csvData.rowCount,
+          successCount: 0,
+          errorCount: csvData.rowCount,
+          errors: [
+            {
+              rowIndex: -1,
+              rowData: {},
+              error: 'Import cancelled by user',
+            },
+          ],
+        };
+      }
 
       return {
         success: false,
@@ -113,6 +150,8 @@ export class ImportService {
           },
         ],
       };
+    } finally {
+      this.abortController = null;
     }
   }
 
@@ -126,6 +165,9 @@ export class ImportService {
     csvData: CsvData,
     onProgress?: (progress: ImportProgress) => void
   ): Promise<ImportResults> {
+    // Create new abort controller for this import
+    this.abortController = new AbortController();
+
     try {
       // Start import
       onProgress?.({
@@ -143,12 +185,35 @@ export class ImportService {
       );
 
       // Import items with progress
-      const results = await cmsApi.importItems(modelId, projectId, items, onProgress);
+      const results = await cmsApi.importItems(
+        modelId,
+        projectId,
+        items,
+        onProgress,
+        this.abortController?.signal
+      );
 
       return results;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+
+      // Check if it was cancelled
+      if (error instanceof Error && error.name === 'AbortError') {
+        return {
+          success: false,
+          totalRows: csvData.rowCount,
+          successCount: 0,
+          errorCount: csvData.rowCount,
+          errors: [
+            {
+              rowIndex: -1,
+              rowData: {},
+              error: 'Import cancelled by user',
+            },
+          ],
+        };
+      }
 
       return {
         success: false,
@@ -163,6 +228,8 @@ export class ImportService {
           },
         ],
       };
+    } finally {
+      this.abortController = null;
     }
   }
 

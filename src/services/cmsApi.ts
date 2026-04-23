@@ -27,11 +27,12 @@ export class CmsApiService {
   private queue: PQueue;
 
   constructor() {
-    // Initialize rate-limited queue (5-10 requests per second)
+    // Initialize rate-limited queue for faster imports
+    // Increased limits: 20 concurrent requests, 50 requests per second
     this.queue = new PQueue({
-      concurrency: 5,
+      concurrency: 20,
       interval: 1000,
-      intervalCap: 10,
+      intervalCap: 50,
     });
   }
 
@@ -377,7 +378,8 @@ export class CmsApiService {
     modelId: string,
     projectId: string,
     items: ItemField[][],
-    onProgress?: (progress: ImportProgress) => void
+    onProgress?: (progress: ImportProgress) => void,
+    abortSignal?: AbortSignal
   ): Promise<ImportResults> {
     this.ensureInitialized();
 
@@ -387,6 +389,13 @@ export class CmsApiService {
     const errors: ImportError[] = [];
 
     for (let i = 0; i < items.length; i++) {
+      // Check if import was cancelled
+      if (abortSignal?.aborted) {
+        const abortError = new Error('Import cancelled by user');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
+
       try {
         await this.createItem(modelId, projectId, items[i]);
         successCount++;
