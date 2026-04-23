@@ -115,10 +115,10 @@ export const StepOne: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Re:Earth CMS Credentials</h3>
         <Input
-          label="API Key"
+          label="Integration Token"
           name="apiKey"
           type="password"
-          placeholder="Enter your Re:Earth CMS API key"
+          placeholder="Enter your Re:Earth CMS integration token"
           value={state.credentials.apiKey}
           onChange={(value) => {
             updateCredentials({ apiKey: value });
