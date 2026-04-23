@@ -278,15 +278,16 @@ export interface InputProps {
 }
 
 export interface SelectProps {
-  label: string;
+  label?: string;
   name: string;
   placeholder?: string;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; disabled?: boolean }>;
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  className?: string;
   'data-testid'?: string;
 }
 

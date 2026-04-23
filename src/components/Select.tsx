@@ -19,25 +19,32 @@ export const Select: React.FC<SelectProps> = ({
   error,
   required = false,
   disabled = false,
+  className,
   'data-testid': dataTestId,
 }) => {
   return (
-    <div className="mb-4 space-y-2">
-      <Label htmlFor={name}>
-        {label}
-        {required && <span className="text-destructive ml-1">*</span>}
-      </Label>
+    <div className={label ? "mb-4 space-y-2" : ""}>
+      {label && (
+        <Label htmlFor={name}>
+          {label}
+          {required && <span className="text-destructive ml-1">*</span>}
+        </Label>
+      )}
       <ShadSelect value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
           id={name}
           data-testid={dataTestId}
-          className={error ? 'border-destructive' : ''}
+          className={`${error ? 'border-destructive' : ''} ${className || ''}`}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+            >
               {option.label}
             </SelectItem>
           ))}

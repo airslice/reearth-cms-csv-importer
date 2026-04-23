@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWizard } from '@/hooks/useWizard';
-import { Input, Select, Button, Table } from '@/components';
+import { Input, Select, Button } from '@/components';
 import { cmsApi, validators } from '@/services';
 import type { Project, Model, FieldMapping, CreateFieldRequest } from '@/types';
 
@@ -17,6 +17,9 @@ export const StepTwo: React.FC = () => {
   const [modelName, setModelName] = useState('');
   const [modelKey, setModelKey] = useState('');
   const [fieldConfigs, setFieldConfigs] = useState<CreateFieldRequest[]>([]);
+
+  // Field selection state for existing model import
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
 
   // Load projects on mount
   useEffect(() => {
@@ -72,17 +75,79 @@ export const StepTwo: React.FC = () => {
 
       // Auto-map fields
       if (model.schema && state.csvData) {
-        const mappings: FieldMapping[] = state.csvData.fields.map(csvField => ({
-          csvField: csvField.name,
-          csvType: csvField.type,
-          targetField: model.schema!.fields.find(f => f.key === csvField.name)?.key || '',
-          targetType: model.schema!.fields.find(f => f.key === csvField.name)?.type || 'text',
-          skip: !model.schema!.fields.find(f => f.key === csvField.name),
-        }));
+        const mappings: FieldMapping[] = state.csvData.fields.map(csvField => {
+          const matchedField = model.schema!.fields.find(f => f.key === csvField.name);
+          return {
+            csvField: csvField.name,
+            csvType: csvField.type,
+            targetField: matchedField?.key || '',
+            targetType: matchedField?.type || 'text',
+            skip: !matchedField,
+          };
+        });
         setFieldMappings(mappings);
+
+        // Initialize all matched fields as selected by default
+        const matchedFields = new Set(
+          mappings.filter(m => !m.skip).map(m => m.csvField)
+        );
+        setSelectedFields(matchedFields);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load model');
+    }
+  };
+
+  const handleTargetFieldChange = (csvField: string, targetFieldKey: string) => {
+    const targetField = state.selectedModel?.schema?.fields.find(f => f.key === targetFieldKey);
+    if (!targetField) return;
+
+    const updatedMappings = state.fieldMappings.map(mapping =>
+      mapping.csvField === csvField
+        ? {
+            ...mapping,
+            targetField: targetFieldKey,
+            targetType: targetField.type,
+            skip: false,
+          }
+        : mapping
+    );
+    setFieldMappings(updatedMappings);
+
+    // Auto-select the field when user maps it
+    if (targetFieldKey) {
+      setSelectedFields(prev => new Set([...prev, csvField]));
+    }
+  };
+
+  const handleFieldToggle = (csvField: string) => {
+    setSelectedFields(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(csvField)) {
+        newSet.delete(csvField);
+        // Clear the target field when unchecking
+        const updatedMappings = state.fieldMappings.map(mapping =>
+          mapping.csvField === csvField
+            ? { ...mapping, targetField: '', skip: true }
+            : mapping
+        );
+        setFieldMappings(updatedMappings);
+      } else {
+        newSet.add(csvField);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all non-skipped fields
+      const allFields = new Set(
+        state.fieldMappings.filter(m => !m.skip).map(m => m.csvField)
+      );
+      setSelectedFields(allFields);
+    } else {
+      setSelectedFields(new Set());
     }
   };
 
@@ -114,8 +179,40 @@ export const StepTwo: React.FC = () => {
         key: modelKey,
         fields: fieldConfigs,
       });
+    } else if (state.importMode === 'existing') {
+      // Validate that at least one field is selected
+      if (selectedFields.size === 0) {
+        setError('Please select at least one field to import');
+        return;
+      }
+
+      // Get selected mappings
+      const selectedMappings = state.fieldMappings.filter(m => selectedFields.has(m.csvField));
+
+      // Check that all selected fields have a target field
+      const unmappedFields = selectedMappings.filter(m => !m.targetField);
+      if (unmappedFields.length > 0) {
+        setError(`Please select target fields for: ${unmappedFields.map(m => m.csvField).join(', ')}`);
+        return;
+      }
+
+      // Check for duplicate target fields
+      const targetFields = selectedMappings.map(m => m.targetField);
+      const duplicates = targetFields.filter((field, index) => targetFields.indexOf(field) !== index);
+      if (duplicates.length > 0) {
+        setError(`Duplicate target fields detected: ${[...new Set(duplicates)].join(', ')}`);
+        return;
+      }
+
+      // Update field mappings based on selected fields
+      const updatedMappings = state.fieldMappings.map(mapping => ({
+        ...mapping,
+        skip: !selectedFields.has(mapping.csvField),
+      }));
+      setFieldMappings(updatedMappings);
     }
 
+    setError(undefined);
     nextStep();
   };
 
@@ -245,16 +342,77 @@ export const StepTwo: React.FC = () => {
           {state.selectedModel && state.fieldMappings.length > 0 && (
             <div className="rounded-lg border bg-card p-4">
               <h4 className="font-semibold mb-3">Field Mappings</h4>
-              <Table
-                columns={[
-                  { key: 'csvField', label: 'CSV Field' },
-                  { key: 'csvType', label: 'CSV Type' },
-                  { key: 'targetField', label: 'Target Field' },
-                  { key: 'skip', label: 'Skip', render: (v) => v ? 'Yes' : 'No' },
-                ]}
-                data={state.fieldMappings}
-                data-testid="step-two-field-mappings"
-              />
+              <p className="text-sm text-muted-foreground mb-3">
+                Select fields to include and choose target mappings
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm table-fixed" data-testid="step-two-field-mappings">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-1.5 px-2 w-[8%]">
+                        <input
+                          type="checkbox"
+                          checked={selectedFields.size > 0 && selectedFields.size === state.fieldMappings.length}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="cursor-pointer"
+                          aria-label="Select all fields"
+                        />
+                      </th>
+                      <th className="text-left py-1.5 px-2 font-medium w-[30%]">CSV Field</th>
+                      <th className="text-left py-1.5 px-2 font-medium w-[15%]">CSV Type</th>
+                      <th className="text-left py-1.5 px-2 font-medium w-[47%]">Target Field</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {state.fieldMappings.map((mapping, index) => {
+                      const isSelected = selectedFields.has(mapping.csvField);
+
+                      // Check if this field's target is duplicated
+                      const isDuplicate = isSelected &&
+                        mapping.targetField &&
+                        state.fieldMappings.some(
+                          m => m.csvField !== mapping.csvField &&
+                          selectedFields.has(m.csvField) &&
+                          m.targetField === mapping.targetField
+                        );
+
+                      return (
+                        <tr key={index} className={`border-b last:border-0 ${!isSelected ? 'opacity-40' : ''}`}>
+                          <td className="py-1.5 px-2 w-[8%]">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleFieldToggle(mapping.csvField)}
+                              className="cursor-pointer"
+                              aria-label={`Include ${mapping.csvField}`}
+                            />
+                          </td>
+                          <td className="py-1.5 px-2 w-[30%] truncate">{mapping.csvField}</td>
+                          <td className="py-1.5 px-2 text-muted-foreground w-[15%]">{mapping.csvType}</td>
+                          <td className="py-1.5 px-2 w-[47%]">
+                            <Select
+                              name={`target-${mapping.csvField}`}
+                              value={mapping.targetField || undefined}
+                              onChange={(value) => handleTargetFieldChange(mapping.csvField, value)}
+                              options={
+                                state.selectedModel?.schema?.fields.map(field => ({
+                                  value: field.key,
+                                  label: field.title || field.key,
+                                })) || []
+                              }
+                              disabled={!isSelected}
+                              className={isDuplicate ? 'border-2 border-red-500' : ''}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-3 text-sm text-muted-foreground">
+                {selectedFields.size} field(s) selected for import
+              </div>
             </div>
           )}
         </div>
@@ -269,7 +427,8 @@ export const StepTwo: React.FC = () => {
           disabled={
             !state.selectedProject ||
             !state.importMode ||
-            (state.importMode === 'createNew' && !!modelKeyError)
+            (state.importMode === 'createNew' && !!modelKeyError) ||
+            (state.importMode === 'existing' && selectedFields.size === 0)
           }
           data-testid="step-two-next"
         >
