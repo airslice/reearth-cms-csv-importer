@@ -8,21 +8,22 @@ export const StepThree: React.FC = () => {
   const [error, setError] = useState<string>();
   const [isCancelling, setIsCancelling] = useState(false);
   const importStartedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     // Prevent double execution in React StrictMode
     if (importStartedRef.current) return;
     importStartedRef.current = true;
+    cancelledRef.current = false;
     executeImport();
   }, []);
 
   const handleCancel = () => {
+    cancelledRef.current = true;
     setIsCancelling(true);
     importService.cancelImport();
-    // Go back to step 2 after a short delay
-    setTimeout(() => {
-      previousStep();
-    }, 500);
+    // Go back to step 2 immediately
+    previousStep();
   };
 
   const executeImport = async () => {
@@ -50,15 +51,21 @@ export const StepThree: React.FC = () => {
         throw new Error('Invalid import configuration');
       }
 
-      setImportResults(results);
-      setTimeout(() => nextStep(), 1500);
+      // Only proceed if not cancelled
+      if (!cancelledRef.current) {
+        setImportResults(results);
+        setTimeout(() => nextStep(), 1500);
+      }
     } catch (err) {
       // Check if it was cancelled
       if (err instanceof Error && err.message === 'Import cancelled by user') {
         // Don't show error for user-initiated cancellation
         return;
       }
-      setError(err instanceof Error ? err.message : 'Import failed');
+      // Only show error if not cancelled
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : 'Import failed');
+      }
     }
   };
 

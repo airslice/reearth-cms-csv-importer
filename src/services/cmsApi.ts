@@ -37,6 +37,13 @@ export class CmsApiService {
   }
 
   /**
+   * Clear all pending requests from the queue
+   */
+  clearQueue(): void {
+    this.queue.clear();
+  }
+
+  /**
    * Initialize the CMS API client
    */
   initialize(config: CmsApiConfig): void {

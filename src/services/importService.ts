@@ -25,6 +25,8 @@ export class ImportService {
       this.abortController.abort();
       this.abortController = null;
     }
+    // Clear any pending requests from the queue
+    cmsApi.clearQueue();
   }
 
   /**
